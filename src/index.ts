@@ -2,7 +2,7 @@
 import {Displayer, Observable} from 'elt'
 
 
-export type BlockDefinition = (parent: Node | undefined) => Node | undefined
+export type BlockDefinition = () => Node | undefined
 
 
 export interface BlockInstanciator<B extends Block> {
@@ -14,7 +14,6 @@ export interface BlockInstanciator<B extends Block> {
 export class Block {
 
   parent: Block | undefined
-  last_render: Node | undefined
 
   static define<B extends Block>(this: BlockInstanciator<B>, def: BlockDefinition) {
     return new this(def)
@@ -22,13 +21,8 @@ export class Block {
 
   constructor(public def: BlockDefinition) { }
 
-  render(parent?: Node): Node | undefined {
-    if (!parent && this.parent) {
-      parent = this.parent.render()
-    }
-
-    this.last_render = this.def(parent)
-    return this.last_render
+  render(): Node | undefined {
+    return this.def()
   }
 
 }
@@ -37,23 +31,15 @@ export class Block {
 export class BlockDisplayer extends Displayer {
   constructor(public app: App, public block: BlockInstanciator<Block>) {
 
-    super(app.o_current_screen.tf((screen, prev_screen) => {
+    super(app.o_current_screen.tf(screen => {
       if (!screen)
-        return null
+      return null
 
       var b = screen.blocks.get(block)
+      return b
+    }).tf((b, prev_block) => {
       if (!b) return null
-
-      var sup: Node | undefined
-      if (b.parent && prev_screen) {
-        var prev_b = prev_screen.blocks.get(block)
-        if (prev_b === b.parent) {
-          // Reuse the node that was rendered in the previous screen.
-          sup = prev_b.last_render
-        }
-      }
-
-      return b.render(sup)
+      return b.render()
     }))
 
   }
@@ -66,9 +52,17 @@ export class Screen {
 
   extend(...blocks: Block[]) {
     var s = new Screen(...blocks)
-    for (var b of blocks) {
-      b.parent = this.blocks.get(b.constructor as BlockInstanciator<Block>)
-    }
+
+    this.blocks.forEach((block, inst) => {
+      var new_block = s.blocks.get(inst)
+      if (new_block) {
+        new_block.parent = block
+      } else {
+        // Add the missing block from the child
+        s.blocks.set(inst, block)
+      }
+    })
+
     return s
   }
 

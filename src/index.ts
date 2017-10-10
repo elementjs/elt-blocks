@@ -2,7 +2,7 @@
 import {Displayer, Observable} from 'elt'
 
 
-export type BlockDefinition = () => Node | undefined
+export type BlockDefinition = () => Node | undefined | null
 
 
 export interface BlockInstanciator<B extends Block> {
@@ -21,7 +21,7 @@ export class Block {
 
   constructor(public def: BlockDefinition) { }
 
-  render(): Node | undefined {
+  render(): Node | undefined | null {
     return this.def()
   }
 

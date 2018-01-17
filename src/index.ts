@@ -81,7 +81,18 @@ export class Screen {
  */
 export class App {
 
+  protected screens: {[name: string]: Screen} = {}
   o_current_screen: Observable<Screen | null> = new Observable(null)
+
+  register(screen_name: string, screen: Screen) {
+    this.screens[screen_name] = screen
+  }
+
+  setScreenName(name: string) {
+    if (!this.screens[name])
+      throw new Error(`no such screen "${name}"`)
+    this.o_current_screen.set(this.screens[name])
+  }
 
   setScreen(screen: Screen) {
     this.o_current_screen.set(screen)

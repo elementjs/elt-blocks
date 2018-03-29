@@ -50,8 +50,9 @@ export class Screen {
 
   blocks: Map<BlockInstanciator<Block>, Block>
 
-  extend(...blocks: Block[]) {
-    var s = new Screen(...blocks)
+  extend(name: string, ...blocks: Block[]) {
+    var s = new Screen(this.app, ...blocks)
+    this.app.screens[name] = s
 
     this.blocks.forEach((block, inst) => {
       var new_block = s.blocks.get(inst)
@@ -66,7 +67,7 @@ export class Screen {
     return s
   }
 
-  constructor(...blocks: Block[]) {
+  constructor(public app: App, ...blocks: Block[]) {
     this.blocks = new Map()
     for (var b of blocks) {
       this.blocks.set(b.constructor as BlockInstanciator<Block>, b)
@@ -81,21 +82,19 @@ export class Screen {
  */
 export class App {
 
-  protected screens: {[name: string]: Screen} = {}
+  screens: {[name: string]: Screen} = {}
   o_current_screen: Observable<Screen | null> = new Observable(null)
 
-  register(screen_name: string, screen: Screen) {
+  screen(screen_name: string, ...blocks: Block[]) {
+    const screen = new Screen(this, ...blocks)
     this.screens[screen_name] = screen
+    return screen
   }
 
-  setScreenName(name: string) {
+  setScreen(name: string) {
     if (!this.screens[name])
       throw new Error(`no such screen "${name}"`)
     this.o_current_screen.set(this.screens[name])
-  }
-
-  setScreen(screen: Screen) {
-    this.o_current_screen.set(screen)
   }
 
   displayBlock(block: BlockInstanciator<Block>) {

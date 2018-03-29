@@ -1,5 +1,5 @@
 
-import {Displayer, Observable} from 'elt'
+import {Displayer, Observable, instanciate_verb} from 'elt'
 
 
 export type BlockDefinition = () => Node | undefined | null
@@ -99,7 +99,7 @@ export class App {
   }
 
   displayBlock(block: BlockInstanciator<Block>) {
-    return BlockDisplayer.create(this, block)
+    return instanciate_verb(new BlockDisplayer(this, block))
   }
 
 }
